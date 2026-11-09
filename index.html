@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Diagnosa Konfigurasi Organisasi - Burton & Obel Model</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff', 100: '#e0effe', 200: '#bae0fd', 300: '#7cc8fc',
+                            400: '#38aef9', 500: '#0e92eb', 600: '#0273ca', 700: '#035ca3',
+                            800: '#074f87', 900: '#0b4270', 950: '#082a4a',
+                        },
+                        slate: { 900: '#0b1329', 950: '#050b18' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1329; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        
+        @media print {
+            body { background: #ffffff !important; color: #000000 !important; font-size: 11pt !important; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .print-container { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+            .print-card { border: 1px solid #cbd5e1 !important; background: #ffffff !important; color: #000000 !important; page-break-inside: avoid; }
+            svg { filter: none !important; }
+        }
+
+        .likert-btn.active {
+            background-color: #0e92eb !important;
+            color: white !important;
+            border-color: #38aef9 !important;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="no-print bg-slate-900/80 border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between py-4">
+            <div class="flex items-center gap-3">
+                <div class="p-3 bg-brand-600/20 text-brand-400 rounded-2xl border border-brand-500/30">
+                    <i class="fa-solid fa-cubes-stacked text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl bg-gradient-to-r from-brand-400 to-emerald-400 bg-clip-text text-transparent">OrgConfig</h1>
+                    <p class="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Sistem Diagnosa Desain Organisasi</p>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex bg-slate-950/60 p-1.5 rounded-xl border border-slate-800/80 gap-1">
+                <button onclick="switchTab('edukasi')" id="tab-edukasi" class="px-5 py-2.5 rounded-lg text-xs font-bold uppercase bg-slate-900 text-brand-400 border border-slate-800">
+                    <i class="fa-solid fa-book-open"></i> 1. Pembelajaran Teori
+                </button>
+                <button onclick="switchTab('diagnostik')" id="tab-diagnostik" class="px-5 py-2.5 rounded-lg text-xs font-bold uppercase text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-sliders"></i> 2. Diagnosa Mandiri
+                </button>
+                <button onclick="switchTab('kolektif')" id="tab-kolektif" class="px-5 py-2.5 rounded-lg text-xs font-bold uppercase text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-chart-line"></i> 3. Analisis Kolektif
+                </button>
+            </nav>
+
+            <div class="text-right hidden sm:block">
+                <span class="text-[10px] text-slate-500 block font-bold uppercase tracking-widest">Designer</span>
+                <span class="text-xs font-bold text-slate-300">Iman N Bajuasijadji</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="no-print fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-out flex items-center gap-3 bg-slate-900 border border-emerald-500/30 text-emerald-400 px-5 py-4 rounded-2xl shadow-2xl max-w-sm">
+        <div class="p-2 bg-emerald-500/10 rounded-xl text-emerald-400"><i class="fa-solid fa-circle-check text-lg"></i></div>
+        <div><p class="font-bold text-sm text-slate-200" id="toast-title">Berhasil!</p><p class="text-xs text-slate-400 mt-0.5" id="toast-msg">Data telah disimpan.</p></div>
+    </div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ==================== HALAMAN 1: PEMBELAJARAN LENGKAP ==================== -->
+        <section id="content-edukasi" class="tab-content block space-y-12 animate-[fadeIn_0.4s_ease-out]">
+            <!-- Jumbotron Banner -->
+            <div class="relative bg-gradient-to-br from-slate-900 via-slate-950 to-brand-950 border border-slate-800/80 rounded-3xl p-8 sm:p-12 overflow-hidden shadow-2xl">
+                <div class="absolute -top-40 -right-40 w-96 h-96 bg-brand-500/15 rounded-full blur-[100px] pointer-events-none"></div>
+                <div class="relative max-w-4xl space-y-5">
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold bg-brand-500/10 text-brand-400 rounded-full border border-brand-500/20 uppercase tracking-widest">
+                        <i class="fa-solid fa-graduation-cap"></i> Modul Strategis
+                    </span>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-white font-serif">
+                        Memahami Desain Organisasi secara Komprehensif
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Landasan Teori Mendalam -->
+            <div class="bg-slate-900 border border-slate-800/80 p-8 sm:p-10 rounded-3xl shadow-xl space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    <div class="lg:col-span-8 space-y-6 text-slate-300 leading-relaxed text-justify">
+                        <h3 class="text-2xl font-bold text-slate-100 font-serif border-l-4 border-brand-500 pl-4">Definisi & Esensi Desain Organisasi</h3>
+                        <p>
+                            Menurut <strong>Burton, Obel, dan DeSanctis (2011)</strong> dalam karya monumental mereka mengenai diagnosa strategis, desain organisasi diartikan sebagai proses dinamis untuk menciptakan keselarasan (<strong>fit</strong>) yang berkelanjutan antara berbagai komponen organisasi guna mencapai keunggulan kompetitif. Desain organisasi melampaui sekadar pembuatan bagan kotak dan garis (organogram); ia merupakan sistem cerdas untuk mengelola aliran informasi, memproses kompleksitas industri, dan mengoordinasikan pendelegasian wewenang secara presisi.
+                        </p>
+                        <p>
+                            Secara akademis, desain organisasi melibatkan pengaturan sistematis terhadap struktur, tugas, proses kerja, dan sistem penghargaan. Burton & Obel menekankan bahwa organisasi yang efektif harus mampu menyeimbangkan tuntutan efisiensi operasional dengan kebutuhan akan eksplorasi inovasi. Dalam lingkungan bisnis yang volatil (<strong>VUCA</strong>), desain organisasi berfungsi sebagai "sistem saraf pusat" yang menentukan seberapa cepat perusahaan merespons sinyal pasar. Pendekatan <strong>multi-contingency</strong> mengasumsikan bahwa tidak ada satu struktur tunggal yang paling benar (<strong>no one-size-fits-all</strong>). Sebaliknya, desain organisasi terbaik adalah yang paling sinkron dengan strategi bisnis, tingkat ketidakpastian lingkungan, serta ketersediaan teknologi.
+                        </p>
+                        <p>
+                            Kegagalan dalam merancang organisasi (<strong>misfit</strong>) akan menyebabkan inefisiensi, moral karyawan yang rendah, hingga hilangnya peluang strategis. Oleh karena itu, desain organisasi adalah keputusan eksekutif tingkat tinggi yang memerlukan pemahaman mendalam tentang bagaimana elemen-elemen seperti iklim organisasi, kepemimpinan, dan insentif saling mengunci (<strong>interlocking</strong>) untuk mendukung visi korporasi secara utuh dan terintegrasi.
+                        </p>
+                    </div>
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800">
+                            <h4 class="text-brand-400 font-bold uppercase tracking-widest text-xs mb-4">Elemen Dasar Struktur</h4>
+                            <ul class="space-y-3 text-[11px]">
+                                <li class="flex gap-2">
+                                    <span class="text-brand-500 font-bold">●</span>
+                                    <span><strong>Spesialisasi:</strong> Pembagian kerja ke dalam tugas-tugas spesifik.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <span class="text-brand-500 font-bold">●</span>
+                                    <span><strong>Departementalisasi:</strong> Pengelompokan tugas berdasarkan fungsi atau produk.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <span class="text-brand-500 font-bold">●</span>
+                                    <span><strong>Rantai Komando:</strong> Garis wewenang dari manajemen puncak ke bawah.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <span class="text-brand-500 font-bold">●</span>
+                                    <span><strong>Rentang Kendali:</strong> Jumlah bawahan yang dapat dikelola secara efektif.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <span class="text-brand-500 font-bold">●</span>
+                                    <span><strong>Sentralisasi:</strong> Tingkat konsentrasi pengambilan keputusan.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <span class="text-brand-500 font-bold">●</span>
+                                    <span><strong>Formalisasi:</strong> Standarisasi pekerjaan melalui aturan tertulis.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Macam Konfigurasi Burton & Obel -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-8 space-y-8">
+                    <div class="bg-slate-900 border border-slate-800/80 p-6 sm:p-8 rounded-2xl shadow-xl space-y-6">
+                        <h3 class="text-2xl font-bold text-slate-100 flex items-center gap-3 font-serif">
+                            <span class="w-1.5 h-7 bg-emerald-500 rounded-full"></span>
+                            4 Pilar Konfigurasi Organisasi
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Simple -->
+                            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-yellow-500/50 transition-all group">
+                                <h4 class="text-yellow-500 font-black uppercase tracking-widest text-sm mb-2">1. Simple</h4>
+                                <p class="text-[11px] text-slate-400 mb-3">Spesialisasi & orientasi rendah. Kontrol tersentralisasi.</p>
+                                <div class="bg-yellow-500/10 p-2 rounded border border-yellow-500/20">
+                                    <p class="text-[10px] text-yellow-200 font-bold">Contoh: UMKM, Startup, Bisnis Keluarga.</p>
+                                </div>
+                            </div>
+                            <!-- Functional -->
+                            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-emerald-500/50 transition-all group">
+                                <h4 class="text-emerald-500 font-black uppercase tracking-widest text-sm mb-2">2. Functional</h4>
+                                <p class="text-[11px] text-slate-400 mb-3">Spesialisasi tinggi, orientasi rendah. Fokus efisiensi teknis.</p>
+                                <div class="bg-emerald-500/10 p-2 rounded border border-emerald-500/20">
+                                    <p class="text-[10px] text-emerald-200 font-bold">Contoh: Kementerian, Rumah Sakit Umum.</p>
+                                </div>
+                            </div>
+                            <!-- Divisional -->
+                            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-brand-500/50 transition-all group">
+                                <h4 class="text-brand-400 font-black uppercase tracking-widest text-sm mb-2">3. Divisional</h4>
+                                <p class="text-[11px] text-slate-400 mb-3">Spesialisasi rendah, orientasi pasar tinggi. Unit otonom.</p>
+                                <div class="bg-brand-500/10 p-2 rounded border border-brand-500/20">
+                                    <p class="text-[10px] text-brand-200 font-bold">Contoh: MNC Regional, Konglomerasi.</p>
+                                </div>
+                            </div>
+                            <!-- Matrix -->
+                            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-purple-500/50 transition-all group">
+                                <h4 class="text-purple-400 font-black uppercase tracking-widest text-sm mb-2">4. Matrix</h4>
+                                <p class="text-[11px] text-slate-400 mb-3">Spesialisasi tinggi & orientasi tinggi. Komando ganda.</p>
+                                <div class="bg-purple-500/10 p-2 rounded border border-purple-500/20">
+                                    <p class="text-[10px] text-purple-200 font-bold">Contoh: Boeing, NASA, Tech Giants.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faktor Kontingensi Side (RETAINED) -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800/80 p-6 rounded-2xl shadow-xl h-full">
+                        <h3 class="text-lg font-bold text-slate-100 mb-4 font-serif">9 Faktor Desain</h3>
+                        <div class="space-y-2 text-[10px] text-slate-400">
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>1. Goals & Scope:</strong> Tujuan & batasan operasional.</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>2. Strategy:</strong> Pendekatan bersaing di pasar.</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>3. Environment:</strong> Kondisi ketidakpastian eksternal.</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>4. Configuration:</strong> Arsitektur struktur (Simple-Matrix).</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>5. Task & Agents:</strong> Desain tugas dan kapasitas SDM.</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>6. Leadership Style:</strong> Gaya delegasi kepemimpinan.</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>7. Climate:</strong> Suasana kerja dan nilai budaya.</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>8. Coord. & Control:</strong> Mekanisme penyelarasan unit.</div>
+                            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800"><strong>9. Incentives:</strong> Sistem imbalan dan motivasi.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center pt-4">
+                <button onclick="switchTab('diagnostik')" class="px-10 py-4 bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-sm tracking-widest uppercase rounded-2xl transition-all shadow-lg hover:-translate-y-0.5 flex items-center gap-3">
+                    Mulai Diagnosa Organisasi <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== HALAMAN 2: DIAGNOSA MANDIRI ==================== -->
+        <section id="content-diagnostik" class="tab-content hidden space-y-8 animate-[fadeIn_0.4s_ease-out]">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-8 bg-blue-600/10 border border-blue-500/30 rounded-2xl p-6 flex gap-4">
+                    <div class="text-blue-400 text-2xl mt-1"><i class="fa-solid fa-circle-info"></i></div>
+                    <div class="text-sm">
+                        <h4 class="font-bold text-blue-300 mb-1 uppercase tracking-wider text-xs font-serif text-brand-300">Petunjuk Pengisian Kuesioner:</h4>
+                        <p class="text-slate-300 leading-relaxed text-xs">
+                            Berikan penilaian pada setiap pernyataan di bawah ini dengan memilih angka <strong>1 (Sangat Rendah)</strong> sampai <strong>5 (Sangat Tinggi)</strong>. Pilih angka yang paling menggambarkan kondisi aktual organisasi Anda saat ini.
+                        </p>
+                    </div>
+                </div>
+                <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Menu Simulasi Contoh:</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="fillExample('matrix')" class="py-2 px-3 bg-slate-800 hover:bg-purple-600 text-[9px] font-bold rounded-lg transition-all uppercase">Matrix</button>
+                        <button onclick="fillExample('functional')" class="py-2 px-3 bg-slate-800 hover:bg-emerald-600 text-[9px] font-bold rounded-lg transition-all uppercase">Functional</button>
+                        <button onclick="fillExample('divisional')" class="py-2 px-3 bg-slate-800 hover:bg-brand-600 text-[9px] font-bold rounded-lg transition-all uppercase">Divisional</button>
+                        <button onclick="fillExample('simple')" class="py-2 px-3 bg-slate-800 hover:bg-yellow-600 text-[9px] font-bold rounded-lg transition-all uppercase">Simple</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-slate-300 block uppercase tracking-wider">Nama Responden</label>
+                                <input type="text" id="resp-name" placeholder="Nama Lengkap" class="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none transition-all">
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-slate-300 block uppercase tracking-wider">Nama Perusahaan</label>
+                                <input type="text" id="resp-company" placeholder="Nama Instansi" class="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KUESIONER LIKERT -->
+                    <div class="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 sm:p-8 space-y-8 shadow-xl">
+                        <div class="space-y-6">
+                            <h4 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-slate-800 pb-2">Dimensi X: Orientasi Produk & Pelanggan</h4>
+                            <div class="space-y-4" id="questions-x"></div>
+                        </div>
+                        <div class="space-y-6">
+                            <h4 class="text-xs font-black text-emerald-400 uppercase tracking-widest border-b border-slate-800 pb-2">Dimensi Y: Spesialisasi Fungsional</h4>
+                            <div class="space-y-4" id="questions-y"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 shadow-xl space-y-6 sticky top-24">
+                        <div class="text-center">
+                            <h3 class="text-lg font-bold text-slate-100 font-serif">Matriks Konfigurasi</h3>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest">Burton & Obel Matrix analysis</p>
+                        </div>
+                        <div class="flex justify-center">
+                            <svg width="280" height="280" viewBox="0 0 340 340" class="bg-slate-950 rounded-2xl border border-slate-800">
+                                <rect x="30" y="30" width="140" height="140" fill="#10b981" fill-opacity="0.04" />
+                                <rect x="170" y="30" width="140" height="140" fill="#8b5cf6" fill-opacity="0.04" />
+                                <rect x="30" y="170" width="140" height="140" fill="#f59e0b" fill-opacity="0.04" />
+                                <rect x="170" y="170" width="140" height="140" fill="#3b82f6" fill-opacity="0.04" />
+                                <line x1="30" y1="170" x2="310" y2="170" stroke="#334155" stroke-width="2" stroke-dasharray="5,5" />
+                                <line x1="170" y1="30" x2="170" y2="310" stroke="#334155" stroke-width="2" stroke-dasharray="5,5" />
+                                <rect x="30" y="30" width="280" height="280" fill="none" stroke="#475569" stroke-width="1.5" />
+                                <text x="100" y="105" font-size="10" font-weight="900" fill="#10b981" text-anchor="middle" fill-opacity="0.5">FUNCTIONAL</text>
+                                <text x="240" y="105" font-size="10" font-weight="900" fill="#8b5cf6" text-anchor="middle" fill-opacity="0.5">MATRIX</text>
+                                <text x="100" y="245" font-size="10" font-weight="900" fill="#f59e0b" text-anchor="middle" fill-opacity="0.5">SIMPLE</text>
+                                <text x="240" y="245" font-size="10" font-weight="900" fill="#3b82f6" text-anchor="middle" fill-opacity="0.5">DIVISIONAL</text>
+                                <circle id="live-point" cx="170" cy="170" r="8" fill="#06b6d4" stroke="#ffffff" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl text-center">
+                            <span id="diag-structure-badge" class="mt-2 inline-block text-base font-black px-4 py-1 border border-slate-800 rounded-xl uppercase bg-yellow-500/10 text-yellow-500">SIMPLE</span>
+                        </div>
+                        <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/40 space-y-2 text-xs">
+                             <div class="flex justify-between text-slate-400 font-bold uppercase text-[9px]">
+                                <span>Rerata X: <span id="score-x-val" class="text-white">3.00</span></span>
+                                <span>Rerata Y: <span id="score-y-val" class="text-white">3.00</span></span>
+                            </div>
+                            <p id="diag-analysis-text" class="text-slate-300 leading-relaxed text-justify">Lengkapi kuesioner untuk melihat hasil pemetaan.</p>
+                        </div>
+                        <div class="flex gap-4 pt-2 no-print">
+                            <button onclick="clearKuesioner()" class="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl uppercase tracking-wider transition-all">Clear</button>
+                            <button onclick="saveRespondent()" class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-lg">Simpan Hasil</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REKAP SESI LOKAL -->
+            <div class="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 shadow-xl">
+                <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-widest flex items-center gap-2 font-serif">
+                    <i class="fa-solid fa-clock-rotate-left text-brand-400"></i> Rekap Pemetaan Responden Sesi Ini
+                </h4>
+                <div class="overflow-x-auto rounded-xl">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 uppercase font-black text-[10px]">
+                            <tr>
+                                <th class="p-4 border-b border-slate-800">Nama Responden</th>
+                                <th class="p-4 border-b border-slate-800">Nama Perusahaan</th>
+                                <th class="p-4 border-b border-slate-800 text-center">Skor X</th>
+                                <th class="p-4 border-b border-slate-800 text-center">Skor Y</th>
+                                <th class="p-4 border-b border-slate-800 text-center">Tipe Konfigurasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recap-tbody" class="divide-y divide-slate-800/50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== HALAMAN 3: DASHBOARD KOLEKTIF ==================== -->
+        <section id="content-kolektif" class="tab-content hidden space-y-10 animate-[fadeIn_0.4s_ease-out]">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase mb-1">Total Responden</span>
+                    <span id="tot-respondents" class="text-3xl font-black text-white font-serif">0</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase mb-1">Rerata Kolektif X</span>
+                    <span id="avg-x" class="text-3xl font-black text-brand-400 font-serif">0.00</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase mb-1">Rerata Kolektif Y</span>
+                    <span id="avg-y" class="text-3xl font-black text-emerald-400 font-serif">0.00</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 shadow-xl space-y-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2.5 font-serif"><i class="fa-solid fa-table-list text-brand-400"></i> Repositori Keseluruhan</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-800/60 text-xs">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="text-slate-400 border-b border-slate-800 bg-slate-950/60 font-bold uppercase text-[10px]">
+                                    <tr><th class="p-4">Responden</th><th class="p-4">Perusahaan</th><th class="p-4 text-center">X</th><th class="p-4 text-center">Y</th><th class="p-4 text-center">Tipe</th><th class="p-4 text-center">Aksi</th></tr>
+                                </thead>
+                                <tbody id="respondents-tbody" class="divide-y divide-slate-800/40 text-slate-300 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 shadow-xl space-y-6">
+                        <div class="text-center font-serif font-bold uppercase tracking-wider text-slate-300 text-sm">Posisi Kolektif Organisasi</div>
+                        <div class="flex justify-center">
+                            <svg width="240" height="240" viewBox="0 0 340 340" class="bg-slate-950 rounded-2xl border border-slate-800">
+                                <rect x="30" y="30" width="140" height="140" fill="#10b981" fill-opacity="0.04" /><rect x="170" y="30" width="140" height="140" fill="#8b5cf6" fill-opacity="0.04" />
+                                <rect x="30" y="170" width="140" height="140" fill="#f59e0b" fill-opacity="0.04" /><rect x="170" y="170" width="140" height="140" fill="#3b82f6" fill-opacity="0.04" />
+                                <line x1="30" y1="170" x2="310" y2="170" stroke="#334155" stroke-width="2" stroke-dasharray="5,5" /><line x1="170" y1="30" x2="170" y2="310" stroke="#334155" stroke-width="2" stroke-dasharray="5,5" />
+                                <rect x="30" y="30" width="280" height="280" fill="none" stroke="#475569" stroke-width="1.5" />
+                                <circle id="avg-point" cx="170" cy="170" r="10" fill="#10b981" stroke="#ffffff" stroke-width="2.5" />
+                            </svg>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-center">
+                            <span id="col-structure-badge" class="inline-block text-base font-black px-4 py-1 bg-brand-500/15 text-brand-400 border border-brand-500/20 rounded-xl uppercase">BELUM ADA DATA</span>
+                        </div>
+                        <p id="col-analysis-text" class="text-xs text-slate-300 leading-relaxed text-justify bg-slate-950/40 p-4 rounded-2xl border border-slate-800/40 font-normal">Analisis naratif kolektif (min 50 kata) akan muncul di sini.</p>
+                        <button onclick="openPrintPreview()" class="w-full py-4 px-4 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-extrabold text-xs rounded-xl uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-pdf text-base"></i> Pra-Cetak Laporan PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- PRINT PREVIEW MODAL -->
+    <div id="print-modal" class="no-print fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex justify-center items-start overflow-y-auto py-10 px-4 hidden">
+        <div class="bg-white text-slate-900 rounded-3xl max-w-4xl w-full p-8 sm:p-12 shadow-2xl relative space-y-8 my-auto print-container">
+            <button onclick="closePrintPreview()" class="absolute top-6 right-6 w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center transition no-print"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-300 pb-6 gap-4 font-serif text-slate-950">
+                <div><h2 class="text-xl sm:text-2xl font-extrabold uppercase">Laporan Diagnosa Konfigurasi Organisasi</h2><p class="text-xs text-slate-500 font-bold uppercase mt-1">Multi-Contingency Model Burton & Obel</p></div>
+                <div class="text-right shrink-0"><span class="text-xs font-black bg-slate-100 px-3 py-1.5 rounded-lg border uppercase tracking-widest block text-slate-700">Dokumen Resmi</span><p id="print-date-display" class="text-[10px] mt-2 font-bold text-slate-400"></p></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div><span class="text-[9px] text-slate-400 font-black uppercase block mb-1">Developer & Penyusun:</span><p class="font-extrabold text-slate-900 text-sm">Iman N Bajuasijadji</p></div>
+                <div><span class="text-[9px] text-slate-400 font-black uppercase block mb-1 text-slate-500">Metodologi Rujukan:</span><p class="font-extrabold text-slate-900 text-sm italic">Designing Organization Structure - 2025</p></div>
+            </div>
+            
+            <div class="space-y-4">
+                <h3 class="font-extrabold border-b pb-2 uppercase tracking-wide font-serif text-slate-900 text-sm">1. Rangkuman Diagnosa Gabungan</h3>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"><span class="text-[9px] text-slate-400 font-bold block uppercase mb-1 text-slate-500">Total Responden</span><span id="p-tot-resp" class="text-xl font-black text-slate-900 font-serif">0</span></div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"><span class="text-[9px] text-slate-400 font-bold block uppercase mb-1 text-slate-500">Rerata Skor X</span><span id="p-avg-x" class="text-xl font-black text-slate-900 font-serif">0.00</span></div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"><span class="text-[9px] text-slate-400 font-bold block uppercase mb-1 text-slate-500">Rerata Skor Y</span><span id="p-avg-y" class="text-xl font-black text-slate-900 font-serif">0.00</span></div>
+                </div>
+                
+                <div class="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center mt-3">
+                    <span class="text-[9px] text-slate-500 block font-bold uppercase tracking-widest">Tipe Desain Konfigurasi Dominan:</span>
+                    <span id="p-structure-title" class="text-lg font-black text-brand-700 mt-1 uppercase tracking-wider block font-serif">-</span>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <h3 class="font-extrabold border-b pb-2 uppercase tracking-wide font-serif text-slate-900 text-sm">2. Analisis Naratif Kolektif</h3>
+                <p id="p-analysis-text" class="text-xs text-slate-700 leading-relaxed text-justify font-sans"></p>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-extrabold border-b pb-2 uppercase tracking-wide font-serif text-slate-900 text-sm">3. Rincian Partisipasi Responden</h3>
+                <div class="overflow-hidden border border-slate-200 rounded-xl">
+                    <table class="w-full text-left text-[10px] border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 font-extrabold uppercase">
+                                <th class="p-3">Nama Partisipan</th>
+                                <th class="p-3">Instansi / Perusahaan</th>
+                                <th class="p-3 text-center">Orientasi (X)</th>
+                                <th class="p-3 text-center">Spesialisasi (Y)</th>
+                                <th class="p-3 text-center">Hasil Diagnosa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="p-table-body" class="text-slate-600 divide-y divide-slate-200 font-medium"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end pt-10 border-t border-slate-200">
+                <div class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-slate-500">OrgConfig Suite v1.0</div>
+                <div class="text-right space-y-12 shrink-0">
+                    <p class="text-[9px] text-slate-500 font-extrabold uppercase tracking-widest">Penyusun</p>
+                    <div><p class="text-sm font-extrabold font-serif border-b-2 border-slate-900 pb-1 text-slate-900">Iman N Bajuasijadji</p></div>
+                </div>
+            </div>
+            <div class="flex gap-4 justify-end pt-5 border-t border-slate-100 no-print">
+                <button onclick="closePrintPreview()" class="py-2.5 px-6 bg-slate-100 text-[10px] font-bold rounded-xl uppercase hover:bg-slate-200 text-slate-700">Batal</button>
+                <button onclick="window.print()" class="py-2.5 px-8 bg-brand-600 text-white text-[10px] font-bold rounded-xl uppercase shadow-lg hover:bg-brand-500">Cetak Laporan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASSWORD SYSTEM ACCESS MODAL -->
+    <div id="password-modal" class="no-print fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex justify-center items-center hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative space-y-6 mx-4">
+            <div class="text-center space-y-2">
+                <div class="mx-auto w-12 h-12 bg-brand-500/10 text-brand-400 rounded-2xl flex items-center justify-center border border-brand-500/20">
+                    <i class="fa-solid fa-lock text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white font-serif">Akses Terbatas</h3>
+                <p class="text-xs text-slate-400">Silakan masukkan sandi untuk membuka akses menu Diagnosa Mandiri dan Analisis Kolektif.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-300 block uppercase tracking-wider">Kata Sandi</label>
+                    <div class="relative">
+                        <input type="password" id="access-password" placeholder="Masukkan password" onkeyup="if(event.key === 'Enter') verifyPassword()" class="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 rounded-xl pl-4 pr-10 py-3 text-sm text-slate-100 outline-none transition-all">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-200">
+                            <i id="password-toggle-icon" class="fa-solid fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                    <p id="password-error" class="text-[11px] text-red-500 hidden font-semibold"><i class="fa-solid fa-circle-exclamation mr-1"></i>Kata sandi salah!</p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="closePasswordModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl uppercase tracking-wider transition-all">
+                        Batal
+                    </button>
+                    <button onclick="verifyPassword()" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-lg">
+                        Verifikasi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="no-print bg-slate-900 border-t border-slate-800 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+            <div>OrgConfig Suite - Multi-Contingency Model</div>
+            <div class="text-right">Developer: <span class="text-slate-300">Iman N Bajuasijadji</span></div>
+        </div>
+    </footer>
+
+    <script>
+        const questions = {
+            x: [
+                "Apakah fokus kegiatan utama unit Anda dirancang untuk efisiensi operasional internal (1) atau ekspektasi kustomisasi produk/pelanggan (5)?",
+                "Sejauh mana perusahaan membentuk sub-unit atau tim kerja otonom berdasarkan segmen pasar/klien tertentu (1-5)?",
+                "Sejauh mana organisasi mendirikan lini sub-unit spesifik yang mengurus peluncuran produk atau jasa layanan baru secara reguler (1-5)?"
+            ],
+            y: [
+                "Sejauh mana pembentukan departemen didasarkan pada kesamaan latar belakang keahlian teknis secara rigid (seperti Finance, IT) (1-5)?",
+                "Apakah pembagian kerja harian mengarah pada deskripsi kerja yang sangat spesifik dan kaku (5) atau luwes (1)?",
+                "Sejauh mana standar operasional dan wewenang jabatan formal didefinisikan secara tertulis dan disahkan resmi (1-5)?"
+            ]
+        };
+
+        const state = {
+            scores: { q1: 3, q2: 3, q3: 3, q4: 3, q5: 3, q6: 3 },
+            respondents: [],
+            isAuthenticated: false, // Melacak status login akses password (murni in-memory)
+            activeTab: 'edukasi' // Melacak tab aktif saat ini
+        };
+
+        let pendingTab = null; // Menyimpan tab yang akan dibuka setelah berhasil verifikasi
+
+        window.onload = function() {
+            // LOAD DATA DARI LOCAL STORAGE
+            const savedData = localStorage.getItem('org_respondents_data');
+            if(savedData) {
+                state.respondents = JSON.parse(savedData);
+            }
+            
+            // Kunci akses setiap kali halaman direfresh atau dimuat ulang
+            state.isAuthenticated = false;
+            sessionStorage.removeItem('org_authenticated');
+            
+            updateTabLockUI();
+            renderLikert();
+            updateMapping();
+            renderTables();
+            updateCollective();
+            
+            document.getElementById('print-date-display').innerText = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+        };
+
+        // Kunci kembali akses secara instan ketika pengguna beralih tab browser atau meminimalkan aplikasi
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                state.isAuthenticated = false;
+                updateTabLockUI();
+                
+                // Jika pengguna saat meninggalkan aplikasi sedang berada di Halaman 2 atau 3,
+                // alihkan ke halaman 1 (Edukasi) demi alasan keamanan data kuesioner.
+                if (state.activeTab === 'diagnostik' || state.activeTab === 'kolektif') {
+                    switchTab('edukasi');
+                }
+            }
+        });
+
+        function updateTabLockUI() {
+            const tabDiag = document.getElementById('tab-diagnostik');
+            const tabCol = document.getElementById('tab-kolektif');
+            
+            if (!state.isAuthenticated) {
+                if (tabDiag && !tabDiag.innerHTML.includes('fa-lock')) {
+                    tabDiag.innerHTML = `<i class="fa-solid fa-sliders"></i> 2. Diagnosa Mandiri <i class="fa-solid fa-lock text-[10px] ml-1.5 text-slate-500"></i>`;
+                }
+                if (tabCol && !tabCol.innerHTML.includes('fa-lock')) {
+                    tabCol.innerHTML = `<i class="fa-solid fa-chart-line"></i> 3. Analisis Kolektif <i class="fa-solid fa-lock text-[10px] ml-1.5 text-slate-500"></i>`;
+                }
+            } else {
+                if (tabDiag) {
+                    tabDiag.innerHTML = `<i class="fa-solid fa-sliders"></i> 2. Diagnosa Mandiri`;
+                }
+                if (tabCol) {
+                    tabCol.innerHTML = `<i class="fa-solid fa-chart-line"></i> 3. Analisis Kolektif`;
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            // Cek autentikasi sebelum masuk halaman Diagnosa Mandiri atau Analisis Kolektif
+            if ((tab === 'diagnostik' || tab === 'kolektif') && !state.isAuthenticated) {
+                pendingTab = tab;
+                openPasswordModal();
+                return;
+            }
+
+            state.activeTab = tab; // Set tab aktif terbaru
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            ['edukasi', 'diagnostik', 'kolektif'].forEach(b => {
+                const isActive = b === tab;
+                const el = document.getElementById(`tab-${b}`);
+                if(el) {
+                    let textIcon = '';
+                    if (b === 'edukasi') textIcon = `<i class="fa-solid fa-book-open"></i> 1. Pembelajaran Teori`;
+                    else if (b === 'diagnostik') textIcon = `<i class="fa-solid fa-sliders"></i> 2. Diagnosa Mandiri` + (!state.isAuthenticated ? ` <i class="fa-solid fa-lock text-[10px] ml-1.5 text-slate-500"></i>` : '');
+                    else if (b === 'kolektif') textIcon = `<i class="fa-solid fa-chart-line"></i> 3. Analisis Kolektif` + (!state.isAuthenticated ? ` <i class="fa-solid fa-lock text-[10px] ml-1.5 text-slate-500"></i>` : '');
+
+                    el.innerHTML = textIcon;
+                    el.className = isActive ? "px-5 py-2.5 rounded-lg text-xs font-bold uppercase bg-slate-900 text-brand-400 border border-slate-800" : "px-5 py-2.5 rounded-lg text-xs font-bold uppercase text-slate-400 hover:text-slate-200";
+                }
+            });
+        }
+
+        function openPasswordModal() {
+            document.getElementById('access-password').value = '';
+            document.getElementById('password-error').classList.add('hidden');
+            document.getElementById('password-modal').classList.remove('hidden');
+            document.getElementById('access-password').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+            pendingTab = null;
+        }
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('access-password');
+            const icon = document.getElementById('password-toggle-icon');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash text-sm';
+            } else {
+                pwdInput.type = 'password';
+                icon.className = 'fa-solid fa-eye text-sm';
+            }
+        }
+
+        function verifyPassword() {
+            const inputVal = document.getElementById('access-password').value;
+            const currentYear = new Date().getFullYear();
+            const correctPassword = `leadership-${currentYear}`; // Dinamis berbasis tahun berjalan
+
+            if (inputVal === correctPassword) {
+                state.isAuthenticated = true;
+                // Kami sengaja tidak menyimpan status autentikasi ke sessionStorage/localStorage 
+                // untuk menjamin password akan diminta lagi setiap kali halaman di-refresh.
+                
+                document.getElementById('password-modal').classList.add('hidden');
+                showToast("Sukses", "Akses halaman terbuka!", "success");
+                
+                updateTabLockUI();
+                
+                if (pendingTab) {
+                    switchTab(pendingTab);
+                    pendingTab = null;
+                }
+            } else {
+                document.getElementById('password-error').classList.remove('hidden');
+                showToast("Akses Ditolak", "Password yang dimasukkan salah.", "warning");
+            }
+        }
+
+        function renderLikert() {
+            ['x', 'y'].forEach(dim => {
+                const container = document.getElementById(`questions-${dim}`);
+                if (!container) return;
+                container.innerHTML = "";
+                questions[dim].forEach((q, i) => {
+                    const qIdx = dim === 'x' ? i + 1 : i + 4;
+                    container.innerHTML += `
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/40">
+                            <label class="text-[11px] font-bold text-slate-200 block mb-3 leading-relaxed">${qIdx}. ${q}</label>
+                            <div class="flex justify-between gap-2">
+                                ${[1,2,3,4,5].map(num => `
+                                    <button onclick="setScore(${qIdx}, ${num})" id="q${qIdx}-btn-${num}" class="likert-btn flex-1 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-black transition-all ${num === 3 ? 'active' : ''}">${num}</button>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        function setScore(q, val) {
+            state.scores[`q${q}`] = val;
+            for(let i=1; i<=5; i++) {
+                const btn = document.getElementById(`q${q}-btn-${i}`);
+                if(btn) btn.classList.remove('active');
+            }
+            const elActive = document.getElementById(`q${q}-btn-${val}`);
+            if(elActive) elActive.classList.add('active');
+            updateMapping();
+        }
+
+        function fillExample(type) {
+            const examples = {
+                matrix: [4, 5, 4, 4, 5, 5],
+                functional: [2, 1, 2, 4, 5, 5],
+                divisional: [4, 5, 5, 2, 1, 2],
+                simple: [1, 2, 1, 1, 2, 1]
+            };
+            examples[type].forEach((v, i) => setScore(i+1, v));
+            document.getElementById('resp-name').value = "Simulasi " + type.toUpperCase();
+            document.getElementById('resp-company').value = "PT " + type.toUpperCase() + " INDONESIA";
+        }
+
+        function updateMapping() {
+            const avgX = (state.scores.q1 + state.scores.q2 + state.scores.q3) / 3;
+            const avgY = (state.scores.q4 + state.scores.q5 + state.scores.q6) / 3;
+            
+            const scoreXVal = document.getElementById('score-x-val');
+            const scoreYVal = document.getElementById('score-y-val');
+            const livePoint = document.getElementById('live-point');
+            
+            if (scoreXVal) scoreXVal.innerText = avgX.toFixed(2);
+            if (scoreYVal) scoreYVal.innerText = avgY.toFixed(2);
+            if (livePoint) {
+                livePoint.setAttribute('cx', 30 + (avgX - 1) * 70);
+                livePoint.setAttribute('cy', 310 - (avgY - 1) * 70);
+            }
+
+            let structure = 'SIMPLE', badgeClass = 'bg-yellow-500/10 text-yellow-500';
+            if (avgX > 3 && avgY > 3) { structure = 'MATRIX'; badgeClass = 'bg-purple-500/10 text-purple-400'; }
+            else if (avgX <= 3 && avgY > 3) { structure = 'FUNCTIONAL'; badgeClass = 'bg-emerald-500/10 text-emerald-400'; }
+            else if (avgX > 3 && avgY <= 3) { structure = 'DIVISIONAL'; badgeClass = 'bg-brand-500/10 text-brand-400'; }
+
+            const structureBadge = document.getElementById('diag-structure-badge');
+            const diagAnalysisText = document.getElementById('diag-analysis-text');
+            
+            if (structureBadge) {
+                structureBadge.innerText = structure;
+                structureBadge.className = `mt-2 inline-block text-base font-black px-4 py-1 border border-slate-800 rounded-xl uppercase ${badgeClass}`;
+            }
+            if (diagAnalysisText) {
+                diagAnalysisText.innerHTML = `Berdasarkan diagnosa saat ini, organisasi Anda cenderung mengarah pada konfigurasi <strong>${structure}</strong>. Hal ini mencerminkan bagaimana organisasi menyelaraskan fokus fungsional dengan orientasi pasar untuk mencapai fit yang optimal.`;
+            }
+        }
+
+        function clearKuesioner() {
+            document.getElementById('resp-name').value = '';
+            document.getElementById('resp-company').value = '';
+            [1,2,3,4,5,6].forEach(q => setScore(q, 3));
+        }
+
+        function saveRespondent() {
+            const name = document.getElementById('resp-name').value;
+            const company = document.getElementById('resp-company').value;
+            if(!name || !company) { 
+                showToast("Gagal", "Lengkapi profil responden", "warning"); 
+                return; 
+            }
+            
+            const avgX = (state.scores.q1 + state.scores.q2 + state.scores.q3) / 3;
+            const avgY = (state.scores.q4 + state.scores.q5 + state.scores.q6) / 3;
+            const structure = document.getElementById('diag-structure-badge').innerText;
+
+            state.respondents.push({ name, company, x: avgX, y: avgY, structure, id: Date.now() });
+            
+            // SIMPAN KE LOCAL STORAGE
+            localStorage.setItem('org_respondents_data', JSON.stringify(state.respondents));
+            
+            renderTables();
+            updateCollective();
+            showToast("Berhasil", "Pemetaan tersimpan", "success");
+            clearKuesioner();
+        }
+
+        function renderTables() {
+            const rows = state.respondents.map(r => `
+                <tr class="hover:bg-slate-900/30">
+                    <td class="p-4 font-bold text-white">${r.name}</td>
+                    <td class="p-4">${r.company}</td>
+                    <td class="p-4 text-center text-brand-400 font-bold">${r.x.toFixed(2)}</td>
+                    <td class="p-4 text-center text-emerald-400 font-bold">${r.y.toFixed(2)}</td>
+                    <td class="p-4 text-center"><span class="px-2 py-0.5 bg-slate-800 rounded text-[9px] font-black">${r.structure}</span></td>
+                    <td class="p-4 text-center no-print"><button onclick="deleteRes(${r.id})" class="text-red-500 hover:text-red-300"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`).join('');
+            
+            const recap = document.getElementById('recap-tbody');
+            const resp = document.getElementById('respondents-tbody');
+            if(recap) recap.innerHTML = rows;
+            if(resp) resp.innerHTML = rows;
+        }
+
+        function deleteRes(id) {
+            state.respondents = state.respondents.filter(r => r.id !== id);
+            // UPDATE LOCAL STORAGE SETELAH HAPUS
+            localStorage.setItem('org_respondents_data', JSON.stringify(state.respondents));
+            renderTables();
+            updateCollective();
+        }
+
+        function updateCollective() {
+            const count = state.respondents.length;
+            document.getElementById('tot-respondents').innerText = count;
+            if(count === 0) {
+                document.getElementById('avg-x').innerText = "0.00";
+                document.getElementById('avg-y').innerText = "0.00";
+                document.getElementById('col-structure-badge').innerText = "BELUM ADA DATA";
+                document.getElementById('avg-point').setAttribute('cx', 170);
+                document.getElementById('avg-point').setAttribute('cy', 170);
+                return;
+            }
+            const avgX = state.respondents.reduce((a, b) => a + b.x, 0) / count;
+            const avgY = state.respondents.reduce((a, b) => a + b.y, 0) / count;
+            document.getElementById('avg-x').innerText = avgX.toFixed(2);
+            document.getElementById('avg-y').innerText = avgY.toFixed(2);
+            document.getElementById('avg-point').setAttribute('cx', 30 + (avgX - 1) * 70);
+            document.getElementById('avg-point').setAttribute('cy', 310 - (avgY - 1) * 70);
+            
+            let struct = 'SIMPLE';
+            if(avgX > 3 && avgY > 3) struct = 'MATRIX';
+            else if(avgX <= 3 && avgY > 3) struct = 'FUNCTIONAL';
+            else if(avgX > 3 && avgY <= 3) struct = 'DIVISIONAL';
+            
+            document.getElementById('col-structure-badge').innerText = struct;
+            document.getElementById('col-analysis-text').innerHTML = `Berdasarkan agregasi dari <strong>${count} responden</strong>, organisasi secara kolektif mengarah pada konfigurasi <strong>${struct}</strong>. Hasil ini menunjukkan bahwa mayoritas pengambil keputusan merasa perlunya keselarasan antara strategi otonomi produk dengan kedalaman keahlian fungsional demi meminimalisir <strong>misfit</strong> operasional.`;
+        }
+
+        function openPrintPreview() {
+            if(state.respondents.length === 0) {
+                showToast("Laporan Kosong", "Minimal simpan 1 data responden sebelum dapat membuka modul pra-cetak.", "warning");
+                return;
+            }
+            
+            const elTot = document.getElementById('p-tot-resp');
+            const elAvgX = document.getElementById('p-avg-x');
+            const elAvgY = document.getElementById('p-avg-y');
+            const elTitle = document.getElementById('p-structure-title');
+            const elAnalysis = document.getElementById('p-analysis-text');
+            
+            if (elTot) elTot.innerText = state.respondents.length;
+            if (elAvgX) elAvgX.innerText = document.getElementById('avg-x').innerText;
+            if (elAvgY) elAvgY.innerText = document.getElementById('avg-y').innerText;
+            if (elTitle) elTitle.innerText = document.getElementById('col-structure-badge').innerText;
+            if (elAnalysis) elAnalysis.innerHTML = document.getElementById('col-analysis-text').innerHTML;
+
+            const pTbody = document.getElementById('p-table-body');
+            if (pTbody) {
+                pTbody.innerHTML = state.respondents.map(r => `
+                    <tr class="border-b border-slate-200">
+                        <td class="p-3 font-bold text-slate-800">${escapeHtml(r.name)}</td>
+                        <td class="p-3 text-slate-600">${escapeHtml(r.company)}</td>
+                        <td class="p-3 text-center font-bold text-brand-600">${r.x.toFixed(2)}</td>
+                        <td class="p-3 text-center font-bold text-emerald-600">${r.y.toFixed(2)}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-black text-slate-700">${r.structure}</span></td>
+                    </tr>
+                `).join('');
+            }
+
+            const elModal = document.getElementById('print-modal');
+            if (elModal) elModal.classList.remove('hidden');
+        }
+
+        function closePrintPreview() { document.getElementById('print-modal').classList.add('hidden'); }
+
+        function showToast(title, msg, type) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            
+            // RESET CLASS ANIMASI
+            t.classList.remove('opacity-0', 'translate-y-20');
+            
+            t.className = `no-print fixed bottom-6 right-6 z-50 transition-all duration-300 flex items-center gap-3 bg-slate-900 border px-5 py-4 rounded-2xl shadow-2xl opacity-100 translate-y-0 ${type === 'success' ? 'border-emerald-500 text-emerald-400' : 'border-yellow-500 text-yellow-400'}`;
+            
+            // HILANGKAN DALAM 2 DETIK (2000 ms)
+            setTimeout(() => { 
+                t.classList.add('opacity-0', 'translate-y-20'); 
+            }, 2000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
